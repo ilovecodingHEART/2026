@@ -34,7 +34,7 @@ Copy `.env.example` to `.env` if you want to change defaults.
 
 ## Database
 
-The relational schema is in `db/schema.sql`. It models users, sessions, profiles, settings, posts, comments, games, marketplace items, inventory, friendships, messages, notifications, groups, trades, transactions, gift cards, moderation actions, password resets, and email verification tokens.
+The relational schema is in `src/db/schema.sql`. It models users, sessions, profiles, settings, posts, comments, games, marketplace items, inventory, friendships, messages, notifications, groups, trades, transactions, gift cards, moderation actions, password resets, and email verification tokens.
 
 Initialize or reseed with:
 
@@ -46,7 +46,20 @@ Seed data includes demo users, games, marketplace items, inventory, friendships,
 
 ## Architecture
 
-- `server.js` serves original HTML files under preserved routes such as `/home`, `/catalog`, `/users/:id/profile`, `/messages`, `/settings`, `/upgrades/robux`, and `/redeem`.
+- `src/server/index.js` serves original HTML files under preserved routes such as `/home`, `/catalog`, `/users/:id/profile`, `/messages`, `/settings`, `/upgrades/robux`, and `/redeem`.
 - `public/assets/archive-app.js` wires empty archived app roots to database-backed functionality without redesigning the original static files.
-- `db/sqljs.js` provides a lightweight SQLite-compatible persistence wrapper around `sql.js`, avoiding native module compilation in Codespaces and Docker.
-- `db/schema.sql` is the relational source of truth.
+- `src/db/sqljs.js` provides a lightweight SQLite-compatible persistence wrapper around `sql.js`, avoiding native module compilation in Codespaces and Docker.
+- `src/db/schema.sql` is the relational source of truth.
+
+## Repository layout
+
+```txt
+archive/pages/          cleaned downloaded HTML pages
+src/server/             Express server, APIs, and route preservation
+src/db/                 schema and SQLite persistence adapter
+public/assets/          minimal local frontend wiring
+scripts/                database/audit/cleanup scripts
+docs/                   repository audit notes
+```
+
+See `docs/AUDIT.md` for the repository-wide page, route, layout, and dependency map.

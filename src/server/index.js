@@ -1,20 +1,21 @@
-require('dotenv').config({ path: '.env' });
-const fs = require('fs');
 const path = require('path');
+const ROOT_DIR = path.join(__dirname, '..', '..');
+require('dotenv').config({ path: path.join(ROOT_DIR, '.env') });
+const fs = require('fs');
 const crypto = require('crypto');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const helmet = require('helmet');
-const { openDatabase } = require('./db/sqljs');
+const { openDatabase } = require('../db/sqljs');
 
 const PORT = process.env.PORT || 3000;
-const DB_PATH = process.env.DATABASE_URL || path.join(__dirname, 'data', 'site.sqlite');
+const DB_PATH = process.env.DATABASE_URL || path.join(ROOT_DIR, 'data', 'site.sqlite');
 const SESSION_SECRET = process.env.SESSION_SECRET || 'development-secret';
 
 let db;
 async function main() {
-if (!fs.existsSync(DB_PATH)) await require('./scripts/init-db')();
+if (!fs.existsSync(DB_PATH)) await require('../../scripts/init-db')();
 db = await openDatabase(DB_PATH);
 db.pragma('foreign_keys = ON');
 
@@ -25,13 +26,14 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(SESSION_SECRET));
-app.use('/assets', express.static(path.join(__dirname, 'public', 'assets'), { maxAge: '1h' }));
+app.use('/assets', express.static(path.join(ROOT_DIR, 'public', 'assets'), { maxAge: '1h' }));
 
 const pageMap = new Map(Object.entries({
   '/': 'boblox - signup.html',
   '/home': 'Home - boblox.html',
   '/login': 'Log in to Roblox.html',
   '/Login': 'Log in to Roblox.html',
+  '/newlogin': 'Log in to Roblox.html',
   '/signup': 'boblox - signup.html',
   '/catalog': 'Catalog.html',
   '/marketplace': 'Catalog.html',
@@ -56,7 +58,9 @@ const pageMap = new Map(Object.entries({
   '/my/account': 'Settings - Roblox.html',
   '/help': 'Help & Safety - Roblox.html',
   '/help-and-safety': 'Help & Safety - Roblox.html',
+  '/help-safety': 'Help & Safety - Roblox.html',
   '/giftcards': 'Roblox Gift Cards.html',
+  '/giftcards-us': 'Roblox Gift Cards.html',
   '/gift-cards': 'Roblox Gift Cards.html',
   '/redeem': 'Redeem Roblox Gift Cards and Codes.html',
   '/redeem-gift-card': 'Redeem Roblox Gift Cards and Codes.html',
@@ -70,7 +74,23 @@ const pageMap = new Map(Object.entries({
   '/news': 'Newsroom _ Robloxakablog.html',
   '/newsroom': 'Newsroom _ Robloxakablog.html',
   '/blog': 'Newsroom _ Robloxakablog.html',
-  '/amazon': 'Amazon.com_ BOBLOX.html'
+  '/amazon': 'Amazon.com_ BOBLOX.html',
+  '/impact': 'Newsroom _ Robloxakablog.html',
+  '/leadership': 'Newsroom _ Robloxakablog.html',
+  '/values': 'Newsroom _ Robloxakablog.html',
+  '/podcast': 'Newsroom _ Robloxakablog.html',
+  '/education': 'Newsroom _ Robloxakablog.html',
+  '/contact': 'Newsroom _ Robloxakablog.html',
+  '/press-kit': 'Newsroom _ Robloxakablog.html',
+  '/safety': 'Help & Safety - Roblox.html',
+  '/publications': 'Newsroom _ Robloxakablog.html',
+  '/careers': 'Newsroom _ Robloxakablog.html',
+  '/brands': 'Newsroom _ Robloxakablog.html',
+  '/research': 'Newsroom _ Robloxakablog.html',
+  '/investors': 'Newsroom _ Robloxakablog.html',
+  '/terms': 'Help & Safety - Roblox.html',
+  '/privacy': 'Help & Safety - Roblox.html',
+  '/accessibility': 'Help & Safety - Roblox.html'
 }));
 
 function sign(value) {
@@ -113,7 +133,7 @@ function createSession(res, user, req) {
   res.cookie('sid', id, { signed: true, httpOnly: true, sameSite: 'lax', maxAge: 30 * 86400 * 1000 });
 }
 function htmlResponse(file, req) {
-  const full = path.join(__dirname, file);
+  const full = path.join(ROOT_DIR, 'archive', 'pages', file);
   let html = fs.readFileSync(full, 'utf8');
   const boot = `<script>window.__ARCHIVE_PAGE__=${JSON.stringify({ path: req.path, file })}</script><script src="/assets/archive-app.js" defer></script>`;
   return html.includes('</body>') ? html.replace('</body>', `${boot}</body>`) : html + boot;
@@ -122,9 +142,13 @@ function resolvePage(reqPath) {
   const clean = reqPath.replace(/\/$/, '') || '/';
   if (pageMap.has(clean)) return pageMap.get(clean);
   const decoded = decodeURIComponent(clean.slice(1));
-  if (fs.existsSync(path.join(__dirname, decoded))) return decoded;
+  if (fs.existsSync(path.join(ROOT_DIR, 'archive', 'pages', decoded))) return decoded;
   if (/^\/users\/\d+\/profile/.test(clean)) return 'profile - Roblox.html';
+  if (/^\/users\/\d+\/inventory/.test(clean)) return 'Inventory - Roblox.html';
   if (/^\/groups\/\d+/.test(clean)) return 'groups- Roblox.html';
+  if (/^\/games\/\d+/.test(clean)) return 'Top Roblox Games.html';
+  if (/^\/catalog\//.test(clean)) return 'Catalog.html';
+  if (/^\/(gp|b|hz|stores|customer-preferences|prime|deals|Amazon_Basics|haul|fmc|alm|Roblox-|Robux-|dp|music|books-|home-garden|automotive|toys|Tools-|baby-|sports-|Smart-Home|finds|Kindle-|luxurystores|everyday-essentials|amazonfresh)\b/.test(clean)) return 'Amazon.com_ BOBLOX.html';
   return null;
 }
 

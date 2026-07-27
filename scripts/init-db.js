@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { openDatabase } = require('../db/sqljs');
+const { openDatabase } = require('../src/db/sqljs');
 
 const dbPath = process.env.DATABASE_URL || path.join(__dirname, '..', 'data', 'site.sqlite');
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -15,7 +15,7 @@ function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
 async function main() {
 const db = await openDatabase(dbPath);
 db.pragma('foreign_keys = ON');
-db.exec(fs.readFileSync(path.join(__dirname, '..', 'db', 'schema.sql'), 'utf8'));
+db.exec(fs.readFileSync(path.join(__dirname, '..', 'src', 'db', 'schema.sql'), 'utf8'));
 
 const count = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
 if (count === 0) {
