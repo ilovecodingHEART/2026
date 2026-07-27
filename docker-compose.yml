@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: /app/data/site.sqlite
+      SESSION_SECRET: local-development-secret
+      NODE_ENV: development
+    volumes:
+      - ./data:/app/data
