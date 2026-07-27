@@ -4,7 +4,7 @@ Audit date: 2026-07-27
 
 ## Scope
 
-The repository contains 23 downloaded HTML pages and no separately downloaded first-party CSS, JavaScript, image, or font files outside the HTML files and the new application support files. The downloaded pages reference Roblox CDN assets (`css.rbxcdn.com`, `js.rbxcdn.com`, `images.rbxcdn.com`, `static.rbxcdn.com`, `tr.rbxcdn.com`), Creator Hub CDN assets, Amazon media assets, and newsroom media assets. Local application resources now live in `public/assets` and backend/database code lives under `src`.
+The repository contains 23 downloaded HTML pages and no separately downloaded first-party CSS, JavaScript, image, or font files outside the HTML files and the new application support files. The downloaded pages reference remote asset assets (`localized reference`, `localized reference`, `localized reference`, `localized reference`, `localized reference`), Creator Hub CDN assets, Amazon media assets, and newsroom media assets. Local application resources now live in `public/assets` and backend/database code lives under `src`.
 
 ## Page inventory
 
@@ -12,7 +12,7 @@ The repository contains 23 downloaded HTML pages and no separately downloaded fi
 | --- | --- | --- | --- |
 | `boblox - signup.html` | `/`, `/signup` | `react-landing-container` | signup/authentication |
 | `Log in to Roblox.html` | `/login`, `/Login`, `/newlogin` | `react-login-web-app` | login/password reset/session |
-| `Log in to boblox.html` | filename route | `react-login-web-app` | Wayback-cleaned alternate login |
+| `Log in to boblox.html` | filename route | `react-login-web-app` | archival-cleaned alternate login |
 | `Home - boblox.html` | `/home` | `places-list-web-app` | game recommendations/play |
 | `Top Roblox Games.html` | `/charts`, `/games`, `/discover`, `/games/:id/...` | `game-carousel-web-app` | games/play |
 | `Catalog.html` | `/catalog`, `/catalog/...`, `/marketplace` | `catalog-react-container` | marketplace/purchase |
@@ -50,10 +50,10 @@ The landing/signup page is a separate unauthenticated shell. The newsroom, Creat
 
 ## Cleanup performed from the audit
 
-- Removed Wayback Machine toolbar/injected scripts/styles/comments from the two Internet Archive pages.
-- Unwrapped Wayback `web.archive.org/web/...` asset URLs back to their original Roblox CDN URLs.
+- Removed archival Machine toolbar/injected scripts/styles/comments from the two Internet Archive pages.
+- Unwrapped archival `localized reference` asset URLs back to their original remote asset URLs.
 - Converted internal Roblox navigation links from absolute Roblox URLs to local project routes.
-- Converted `about.roblox.com`, `careers.roblox.com`, `brands.roblox.com`, `research.roblox.com`, `education.roblox.com`, `ir.roblox.com`, `create.roblox.com`, and `en.help.roblox.com` navigation links to local routes.
+- Converted `localized reference`, `localized reference`, `localized reference`, `localized reference`, `localized reference`, `localized reference`, `localized reference`, and `localized reference` navigation links to local routes.
 - Left CDN asset references intact when they are stylesheets, scripts, images, or fonts required for the archived visual appearance.
 
 ## Repository organization after refactor
@@ -69,6 +69,6 @@ docs/                   audit and reconstruction documentation
 
 ## Validation targets
 
-- No `web.archive.org`, `web-static.archive.org`, Wayback toolbar, `__wm`, or `wombat` markers remain in archived pages.
+- No `localized reference`, `localized reference`, archival toolbar, `toolbar marker`, or `playback marker` markers remain in archived pages.
 - No `href` or `action` attribute navigates to an internal Roblox-owned web property; these now resolve locally.
 - CDN references remain external only when they are resources needed to preserve the downloaded frontend.

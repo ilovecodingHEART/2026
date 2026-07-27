@@ -7,7 +7,7 @@
     return data;
   });
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const img = url => esc(url || 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-5797DF27D2563DE33541472D0B0404EA-Png/150/150/AvatarHeadshot/Webp/noFilter');
+  const img = url => esc(url || '/local-assets/placeholder.svg');
 
   const style = document.createElement('style');
   style.textContent = `.archive-shell{max-width:1180px;margin:0 auto;padding:24px;color:#f2f4f5;font-family:BuilderSans,Arial,sans-serif}.archive-card{background:#272930;border:1px solid #393b44;border-radius:8px;padding:18px;margin:12px 0}.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}.archive-tile{background:#272930;border-radius:8px;padding:12px;border:1px solid #393b44}.archive-tile img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;background:#393b44}.archive-game img{aspect-ratio:16/9}.archive-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.archive-btn{background:#335fff;color:white;border:0;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}.archive-btn.secondary{background:#393b44}.archive-btn.danger{background:#d93636}.archive-input{background:#191b22;color:#f2f4f5;border:1px solid #555861;border-radius:8px;padding:10px;margin:5px 0;min-width:220px}.archive-muted{color:#b8b8c0}.archive-error{color:#ff8080}.archive-success{color:#6ee78f}.archive-list{display:grid;gap:10px}.archive-avatar{width:88px;height:88px;border-radius:50%;background:#393b44}.archive-topbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:18px}`;
@@ -69,7 +69,7 @@
       if (!f.action || f.id === 'global-search' || f.id === 'nav-search-bar-form') f.addEventListener('submit', e => { const q = new FormData(f).get('search') || new FormData(f).get('field-keywords') || ''; if (q) { e.preventDefault(); location.href = '/catalog?q=' + encodeURIComponent(q); } });
     });
   }
-  function patchLinks() { $$('a[href^="https://www.roblox.com"],a[href^="http://www.roblox.com"]').forEach(a => { try { a.href = new URL(a.href).pathname; } catch {} }); }
+  function patchLinks() { $$('a[href^="/local-assets/placeholder.svg"],a[href^="/local-assets/placeholder.svg"]').forEach(a => { try { a.href = new URL(a.href).pathname; } catch {} }); }
 
   async function boot() {
     patchLinks(); wireSearchForms();
