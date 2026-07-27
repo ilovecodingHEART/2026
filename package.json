@@ -2,8 +2,7 @@
   "scripts": {
     "dev": "nodemon src/server/index.js",
     "start": "node src/server/index.js",
-    "db:init": "node scripts/init-db.js",
-    "test:site": "node scripts/validate-site.js"
+    "db:init": "node scripts/init-db.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",
