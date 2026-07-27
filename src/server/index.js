@@ -27,7 +27,6 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(SESSION_SECRET));
 app.use('/assets', express.static(path.join(ROOT_DIR, 'public', 'assets'), { maxAge: '1h' }));
-app.use('/local-assets', express.static(path.join(ROOT_DIR, 'public', 'local-assets'), { maxAge: '1h' }));
 
 const pageMap = new Map(Object.entries({
   '/': 'boblox - signup.html',
@@ -133,9 +132,64 @@ function createSession(res, user, req) {
     .run(id, user.id, req.ip, req.get('user-agent') || '');
   res.cookie('sid', id, { signed: true, httpOnly: true, sameSite: 'lax', maxAge: 30 * 86400 * 1000 });
 }
+
+function localAssetFor(value) {
+  const clean = String(value || '').split('?')[0].split('#')[0].toLowerCase();
+  if (/\.(css)$/.test(clean)) return '/local-assets/archive.css';
+  if (/\.(js)$/.test(clean)) return '/local-assets/archive-stub.js';
+  if (/\.(png|jpg|jpeg|gif|webp|ico|svg)$/.test(clean)) return '/local-assets/placeholder.svg';
+  if (/\.(woff2?|ttf|otf|eot)$/.test(clean)) return '/local-assets/archive.woff2';
+  return null;
+}
+function localizeRemoteRobloxUrl(raw) {
+  const asset = localAssetFor(raw);
+  if (asset) return asset;
+  try {
+    const url = new URL(String(raw).startsWith('//') ? `https:${raw}` : raw, 'https://local.invalid');
+    const host = url.hostname.toLowerCase();
+    let parts = url.pathname.split('/').filter(Boolean);
+    const locales = new Set(['de','es','fr','id','it','ja','ko','pl','pt','th','tr','vi','ar','hi','bn-in','zh-hans','mr','zh-hant','nl','pt-br','en-au','en-nz','ta','te']);
+    if (parts.length && locales.has(parts[0].toLowerCase())) parts = parts.slice(1);
+    if (host === 'www.roblox.com' || host === 'web.roblox.com' || host === 'roblox.com') {
+      if (!parts.length) return '/';
+      if (parts[0].toLowerCase() === 'communities') parts[0] = 'groups';
+      if (parts[0].toLowerCase() === 'login') return '/login';
+      if (parts[0].toLowerCase() === 'giftcards-us') return '/giftcards';
+      if (parts[0].toLowerCase() === 'plus') return '/subscription';
+      return '/' + parts.join('/') + url.search + url.hash;
+    }
+    if (host.includes('create.roblox.com')) return '/develop';
+    if (host.includes('about.roblox.com')) return parts.length ? '/' + parts.join('/') : '/newsroom';
+    if (host.includes('help.roblox.com')) return '/help';
+    if (host.includes('auth.roblox.com')) return '/api/auth/local';
+    if (host.includes('users.roblox.com')) return '/api/users/local';
+    if (host.includes('economy.roblox.com')) return '/api/economy/local';
+    if (host.includes('catalog.roblox.com')) return '/api/catalog/local';
+    if (host.includes('games.roblox.com')) return '/api/games/local';
+    if (host.includes('friends.roblox.com')) return '/api/friends/local';
+    if (host.includes('groups.roblox.com')) return '/api/groups/local';
+    if (host.includes('inventory.roblox.com')) return '/api/inventory/local';
+    if (host.includes('privatemessages.roblox.com')) return '/api/messages/local';
+    if (host.includes('notifications.roblox.com')) return '/api/notifications/local';
+    if (host.includes('trades.roblox.com')) return '/api/trades/local';
+    if (host.includes('thumbnails.roblox.com')) return '/api/thumbnails/local';
+  } catch (_) {}
+  return '/api/local-compat';
+}
+function patchHtmlAtServeTime(html) {
+  return html
+    .replace(/\b(href|src|action)=(['"])([^'"]+)\2/gi, (m, attr, quote, value) => {
+      if (/(roblox|rbxcdn|web\.archive\.org|web-static\.archive\.org)/i.test(value)) return `${attr}=${quote}${localizeRemoteRobloxUrl(value)}${quote}`;
+      return m;
+    })
+    .replace(/(?:https?:)?\/\/[^\s"'<>)]*(?:roblox|rbxcdn)[^\s"'<>)]*/gi, v => localizeRemoteRobloxUrl(v))
+    .replace(/roblox:\/\/[^\s"'<>)]*/gi, '/games/play')
+    .replace(/\b[a-z0-9.-]*(?:roblox|rbxcdn)[a-z0-9.-]*\.com\b/gi, 'local.test');
+}
+
 function htmlResponse(file, req) {
   const full = path.join(ROOT_DIR, 'archive', 'pages', file);
-  let html = fs.readFileSync(full, 'utf8');
+  let html = patchHtmlAtServeTime(fs.readFileSync(full, 'utf8'));
   const boot = `<script>window.__ARCHIVE_PAGE__=${JSON.stringify({ path: req.path, file })}</script><script src="/assets/archive-app.js" defer></script>`;
   return html.includes('</body>') ? html.replace('</body>', `${boot}</body>`) : html + boot;
 }
@@ -286,6 +340,12 @@ app.get(['/v1/users/authenticated', '/users/v1/users/authenticated'], (req, res)
 app.get('/currency/balance', (req, res) => res.json({ robux: req.user ? req.user.robux_balance : 0 }));
 app.get('/my/settings/json', (req, res) => res.json({ IsUserAuthenticated: !!req.user, UserId: req.user?.id || 0, Name: req.user?.username || null }));
 app.get('/web/submit', (req, res) => res.redirect(req.query.url || '/'));
+
+app.get('/local-assets/archive.css', (req, res) => res.type('text/css').send('/* local archived stylesheet placeholder */'));
+app.get('/local-assets/archive-stub.js', (req, res) => res.type('application/javascript').send('window.Roblox=window.Roblox||{};window.Roblox.BundleDetector=window.Roblox.BundleDetector||{reportBundleError:function(){},bundleDetected:function(){}};'));
+app.get('/local-assets/archive.woff2', (req, res) => res.type('font/woff2').send(Buffer.alloc(0)));
+app.get('/local-assets/placeholder.svg', (req, res) => res.type('image/svg+xml').send('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#393b44"/><rect x="164" y="164" width="184" height="184" rx="16" fill="#f2f4f5" transform="rotate(14 256 256)"/><rect x="229" y="229" width="54" height="54" fill="#393b44" transform="rotate(14 256 256)"/></svg>'));
+
 
 app.all('/api/local-compat', (req, res) => res.json({ ok: true, data: [] }));
 app.all('/api/auth/local', (req, res) => res.json({ ok: true, user: publicUser(req.user) }));
