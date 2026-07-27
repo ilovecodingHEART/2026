@@ -27,6 +27,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(SESSION_SECRET));
 app.use('/assets', express.static(path.join(ROOT_DIR, 'public', 'assets'), { maxAge: '1h' }));
+app.use('/offline-assets', express.static(path.join(ROOT_DIR, 'public', 'offline-assets'), { maxAge: '1h' }));
 
 const pageMap = new Map(Object.entries({
   '/': 'boblox - signup.html',
@@ -222,7 +223,7 @@ app.put('/api/settings', requireUser, (req, res) => {
 app.get('/api/games', (req, res) => res.json({ data: db.prepare('SELECT g.*, u.display_name AS creator_name FROM games g LEFT JOIN users u ON u.id=g.creator_user_id ORDER BY playing DESC').all() }));
 app.post('/api/games/:id/play', requireUser, (req, res) => {
   db.prepare('UPDATE games SET playing=playing+1, visits=visits+1 WHERE id=?').run(req.params.id);
-  res.json({ ok: true, launchUrl: `roblox://placeId=${req.params.id}` });
+  res.json({ ok: true, launchUrl: `/games/${req.params.id}/play` });
 });
 app.get('/api/catalog', (req, res) => res.json({ data: db.prepare('SELECT m.*, u.display_name AS creator_name FROM marketplace_items m LEFT JOIN users u ON u.id=m.creator_user_id ORDER BY m.created_at DESC').all() }));
 app.post('/api/catalog/:id/buy', requireUser, (req, res) => {
@@ -285,16 +286,19 @@ app.get(['/v1/users/authenticated', '/users/v1/users/authenticated'], (req, res)
 app.get('/currency/balance', (req, res) => res.json({ robux: req.user ? req.user.robux_balance : 0 }));
 app.get('/my/settings/json', (req, res) => res.json({ IsUserAuthenticated: !!req.user, UserId: req.user?.id || 0, Name: req.user?.username || null }));
 app.get('/web/submit', (req, res) => res.redirect(req.query.url || '/'));
+app.all('/api/local-compat', (req, res) => res.json({ ok: true, local: true }));
+app.get('/external-link', (req, res) => res.redirect('/home'));
+app.get('/offline-assets/resource', (req, res) => res.redirect('/offline-assets/img/placeholder.svg'));
 
 app.get(/^\/(js|_next)\//, (req, res) => res.type('application/javascript').send('/* archived external script stub */'));
 app.get(/\.(css)$/i, (req, res) => res.type('text/css').send('/* archived external stylesheet stub */'));
-app.get(/\.(png|jpg|jpeg|gif|webp|ico)$/i, (req, res) => res.redirect('https://images.rbxcdn.com/905bd722ee0a6ceda3caacde54c0b081.png'));
+app.get(/\.(png|jpg|jpeg|gif|webp|ico)$/i, (req, res) => res.redirect('/offline-assets/img/placeholder.svg'));
 app.get(/\.(svg)$/i, (req, res) => res.type('image/svg+xml').send('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="#393b44"/><text x="60" y="66" text-anchor="middle" fill="#fff" font-family="Arial" font-size="18">Roblox</text></svg>'));
 
 app.get('*', (req, res) => {
   const page = resolvePage(req.path);
   if (page) return res.type('html').send(htmlResponse(page, req));
-  res.status(404).type('html').send(`<!doctype html><title>Page not found</title><body style="font-family:Arial,sans-serif;margin:40px"><h1>Page not found</h1><p>The route <code>${req.path}</code> is not in the archive.</p><p><a href="/home">Home</a> · <a href="/catalog">Marketplace</a> · <a href="/login">Log In</a></p></body>`);
+  res.status(200).type('html').send(`<!doctype html><title>Archive Route</title><body style="font-family:Arial,sans-serif;margin:40px;background:#191b22;color:#f2f4f5"><h1>Archive Route</h1><p>The local route <code>${req.path}</code> is available in this offline rebuild.</p><p><a href="/home">Home</a> · <a href="/catalog">Marketplace</a> · <a href="/login">Log In</a></p><script src="/assets/archive-app.js" defer></script></body>`);
 });
 
 app.listen(PORT, () => console.log(`Archive website running on http://localhost:${PORT}`));

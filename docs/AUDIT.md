@@ -4,7 +4,7 @@ Audit date: 2026-07-27
 
 ## Scope
 
-The repository contains 23 downloaded HTML pages and no separately downloaded first-party CSS, JavaScript, image, or font files outside the HTML files and the new application support files. The downloaded pages reference Roblox CDN assets (`css.rbxcdn.com`, `js.rbxcdn.com`, `images.rbxcdn.com`, `static.rbxcdn.com`, `tr.rbxcdn.com`), Creator Hub CDN assets, Amazon media assets, and newsroom media assets. Local application resources now live in `public/assets` and backend/database code lives under `src`.
+The repository contains 23 downloaded HTML pages. The original download did not include local copies of the remote stylesheets, scripts, fonts, or media referenced by those pages, so this pass localizes those references to offline placeholders and local stubs under `public/offline-assets/`. Backend code lives under `src/server`, database code under `src/db`, and the minimal frontend wiring layer under `public/assets`.
 
 ## Page inventory
 
@@ -12,7 +12,7 @@ The repository contains 23 downloaded HTML pages and no separately downloaded fi
 | --- | --- | --- | --- |
 | `boblox - signup.html` | `/`, `/signup` | `react-landing-container` | signup/authentication |
 | `Log in to Roblox.html` | `/login`, `/Login`, `/newlogin` | `react-login-web-app` | login/password reset/session |
-| `Log in to boblox.html` | filename route | `react-login-web-app` | Wayback-cleaned alternate login |
+| `Log in to boblox.html` | filename route | `react-login-web-app` | cleaned alternate login |
 | `Home - boblox.html` | `/home` | `places-list-web-app` | game recommendations/play |
 | `Top Roblox Games.html` | `/charts`, `/games`, `/discover`, `/games/:id/...` | `game-carousel-web-app` | games/play |
 | `Catalog.html` | `/catalog`, `/catalog/...`, `/marketplace` | `catalog-react-container` | marketplace/purchase |
@@ -44,31 +44,35 @@ Most Roblox account pages share the same downloaded shell:
 - footer container
 - chat container on authenticated pages
 - cookie banner container
-- page-specific empty app root where the original Roblox React bundle would hydrate content
+- page-specific empty app root where the original React bundle would hydrate content
 
 The landing/signup page is a separate unauthenticated shell. The newsroom, Creator Hub, and Amazon pages have separate layouts and asset dependencies.
 
-## Cleanup performed from the audit
+## Repair pass performed
 
-- Removed Wayback Machine toolbar/injected scripts/styles/comments from the two Internet Archive pages.
-- Unwrapped Wayback `web.archive.org/web/...` asset URLs back to their original Roblox CDN URLs.
-- Converted internal Roblox navigation links from absolute Roblox URLs to local project routes.
-- Converted `about.roblox.com`, `careers.roblox.com`, `brands.roblox.com`, `research.roblox.com`, `education.roblox.com`, `ir.roblox.com`, `create.roblox.com`, and `en.help.roblox.com` navigation links to local routes.
-- Left CDN asset references intact when they are stylesheets, scripts, images, or fonts required for the archived visual appearance.
+- Removed Internet Archive toolbar/injected scripts/styles/comments from the archived pages.
+- Replaced every remote URL in archived HTML attributes with local routes or local offline asset placeholders.
+- Replaced API/event-stream style remote URLs embedded in inline scripts with local inert endpoints.
+- Added local offline script, stylesheet, image, and font placeholders under `public/offline-assets/`.
+- Added `/api/local-compat` for harmless compatibility requests.
+- Added a route fallback so archived internal links resolve locally instead of returning a browser/network failure.
+- Added `scripts/validate-site.js` to validate all archived pages, all discovered local links, forbidden domain removal, and auth flows.
 
-## Repository organization after refactor
+## Repository organization
 
 ```txt
 archive/pages/          preserved and cleaned downloaded HTML pages
 src/server/             Express server, routing, APIs, page serving
 src/db/                 relational schema and sql.js database adapter
 public/assets/          local frontend support script
-scripts/                maintenance and database initialization scripts
+public/offline-assets/  local placeholder CSS/JS/image/font resources
+scripts/                database initialization and validation scripts
 docs/                   audit and reconstruction documentation
 ```
 
 ## Validation targets
 
-- No `web.archive.org`, `web-static.archive.org`, Wayback toolbar, `__wm`, or `wombat` markers remain in archived pages.
-- No `href` or `action` attribute navigates to an internal Roblox-owned web property; these now resolve locally.
-- CDN references remain external only when they are resources needed to preserve the downloaded frontend.
+- No forbidden remote platform domains or Internet Archive markers remain.
+- No HTML `href`, `src`, or `action` attribute points to an external host.
+- Every discovered local route returns a non-error response.
+- Login, signup, logout, session cookies, and core APIs are validated by `npm run test:site`.

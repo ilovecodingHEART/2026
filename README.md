@@ -63,3 +63,14 @@ docs/                   repository audit notes
 ```
 
 See `docs/AUDIT.md` for the repository-wide page, route, layout, and dependency map.
+
+## Validation
+
+Run a local validation pass against a running server:
+
+```bash
+npm start
+npm run test:site
+```
+
+The validator scans all archived HTML pages for forbidden remote platform/archive domains, verifies that HTML attributes do not point to external hosts, requests every discovered local route, and exercises login, signup, logout, session, games, and catalog APIs.

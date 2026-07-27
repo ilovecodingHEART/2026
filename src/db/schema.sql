@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   about TEXT DEFAULT '',
   status TEXT DEFAULT '',
-  avatar_url TEXT DEFAULT 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-5797DF27D2563DE33541472D0B0404EA-Png/150/150/AvatarHeadshot/Webp/noFilter',
+  avatar_url TEXT DEFAULT '/offline-assets/resource',
   theme TEXT DEFAULT 'dark',
   privacy_level TEXT DEFAULT 'friends',
   location TEXT DEFAULT '',
